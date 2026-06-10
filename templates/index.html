@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Trust Loop Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="game-container">
+        <h1>Trust Loop</h1>
+        <p class="subtitle">A Prisoner's Dilemma Game</p>
+
+        <div class="strategy-selectors">
+            <div class="selector-box">
+                <label for="player1-strategy">Player 1 Strategy:</label>
+                <select id="player1-strategy" onchange="handleStrategyChange()">
+                    <option value="manual">Manual (You)</option>
+                    <option value="angel">Angel (Always Cooperates)</option>
+                    <option value="snake">Snake (Always Betrays)</option>
+                    <option value="titfortat">Tit for Tat</option>
+                    <option value="random">Random</option>
+                    <option value="grudger">Grudger</option>
+                </select>
+                <div id="player1-manual-choice" class="manual-choice-container">
+                    <span class="choice-label">Your Move:</span>
+                    <div class="segmented-control">
+                        <button type="button" id="p1-cooperate" class="segmented-btn active" onclick="setManualChoice(1, 'cooperate')">Cooperate</button>
+                        <button type="button" id="p1-betray" class="segmented-btn" onclick="setManualChoice(1, 'betray')">Betray</button>
+                    </div>
+                </div>
+            </div>
+            <div class="selector-box">
+                <label for="player2-strategy">Player 2 Strategy:</label>
+                <select id="player2-strategy" onchange="handleStrategyChange()">
+                    <option value="manual">Manual</option>
+                    <option value="angel" selected>Angel (Always Cooperates)</option>
+                    <option value="snake">Snake (Always Betrays)</option>
+                    <option value="titfortat">Tit for Tat</option>
+                    <option value="random">Random</option>
+                    <option value="grudger">Grudger</option>
+                </select>
+                <div id="player2-manual-choice" class="manual-choice-container" style="display: none;">
+                    <span class="choice-label">Opponent Move:</span>
+                    <div class="segmented-control">
+                        <button type="button" id="p2-cooperate" class="segmented-btn active" onclick="setManualChoice(2, 'cooperate')">Cooperate</button>
+                        <button type="button" id="p2-betray" class="segmented-btn" onclick="setManualChoice(2, 'betray')">Betray</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="score-board">
+            <div>
+                <h2>You</h2>
+                <p id="player-score">0</p>
+            </div>
+            <div>
+                <h2>Opponent</h2>
+                <p id="ai-score">0</p>
+            </div>
+        </div>
+
+        <div class="round-box">
+            <p>Round: <span id="round">1</span> / 10</p>
+        </div>
+
+        <div class="buttons">
+            <button id="btn-play-round" class="play-btn" onclick="playRound()">Play Round</button>
+        </div>
+
+        <div class="result-box">
+            <p id="result">Make your first move.</p>
+        </div>
+
+        <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <script src="{{ url_for('static', filename='static.js') }}"></script>
+</body>
+
+</html>
