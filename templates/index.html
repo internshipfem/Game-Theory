@@ -8,74 +8,320 @@
 </head>
 
 <body>
+    <div id="toast-container" class="toast-container"></div>
 
     <div class="game-container">
         <h1>Trust Loop</h1>
         <p class="subtitle">A Prisoner's Dilemma Game</p>
 
-        <div class="strategy-selectors">
-            <div class="selector-box">
-                <label for="player1-strategy">Player 1 Strategy:</label>
-                <select id="player1-strategy" onchange="handleStrategyChange()">
-                    <option value="manual">Manual (You)</option>
-                    <option value="angel">Angel (Always Cooperates)</option>
-                    <option value="snake">Snake (Always Betrays)</option>
-                    <option value="titfortat">Tit for Tat</option>
-                    <option value="random">Random</option>
-                    <option value="grudger">Grudger</option>
-                </select>
-                <div id="player1-manual-choice" class="manual-choice-container">
-                    <span class="choice-label">Your Move:</span>
-                    <div class="segmented-control">
-                        <button type="button" id="p1-cooperate" class="segmented-btn active" onclick="setManualChoice(1, 'cooperate')">Cooperate</button>
-                        <button type="button" id="p1-betray" class="segmented-btn" onclick="setManualChoice(1, 'betray')">Betray</button>
+        <!-- Tabs Navigation -->
+        <div id="tabs-header" class="tabs-header" style="display: none;">
+            <button id="tab-game-btn" class="tab-btn active" onclick="switchTab('game')">🕹️ Game Mode</button>
+            <button id="tab-arena-btn" class="tab-btn" onclick="switchTab('arena')">🏆 Strategy Arena</button>
+        </div>
+
+        <!-- Intro/Parameters Screen -->
+        <div id="intro-screen" class="screen-section">
+            <div class="about-game">
+                <p>Welcome to <strong>Trust Loop</strong>! This is an interactive game about trust, betrayal, and strategy based on the classical <strong>Prisoner's Dilemma</strong>.</p>
+                <p>Over 10 rounds, you and your opponent will decide whether to <strong>Cooperate</strong> or <strong>Betray</strong>. Your combined choices determine your scores.</p>
+            </div>
+
+            <!-- Hidden inputs to supply default payoff values to the game logic -->
+            <input type="hidden" id="param-cc" value="3">
+            <input type="hidden" id="param-dd" value="1">
+            <input type="hidden" id="param-t" value="5">
+            <input type="hidden" id="param-s" value="0">
+            <input type="hidden" id="param-s-coop" value="0">
+            <input type="hidden" id="param-t-coop" value="5">
+
+            <div class="rules-card">
+                <h3>Payout Parameters</h3>
+                <div class="payoff-matrix">
+                    <div class="payoff-item cooperate-cooperate">
+                        <span class="payoff-label">🤝 Both Cooperate</span>
+                        <span class="payoff-reward">+3 points each</span>
+                    </div>
+                    <div class="payoff-item betray-betray">
+                        <span class="payoff-label">⚔️ Both Betray</span>
+                        <span class="payoff-reward">+1 point each</span>
+                    </div>
+                    <div class="payoff-item player-betrays">
+                        <span class="payoff-label">😈 You Betray & They Cooperate</span>
+                        <span class="payoff-reward">+5 for you, +0 for them</span>
+                    </div>
+                    <div class="payoff-item player-cooperates">
+                        <span class="payoff-label">🥺 You Cooperate & They Betray</span>
+                        <span class="payoff-reward">+0 for you, +5 for them</span>
                     </div>
                 </div>
             </div>
-            <div class="selector-box">
-                <label for="player2-strategy">Player 2 Strategy:</label>
-                <select id="player2-strategy" onchange="handleStrategyChange()">
-                    <option value="manual">Manual</option>
-                    <option value="angel" selected>Angel (Always Cooperates)</option>
-                    <option value="snake">Snake (Always Betrays)</option>
-                    <option value="titfortat">Tit for Tat</option>
-                    <option value="random">Random</option>
-                    <option value="grudger">Grudger</option>
-                </select>
-                <div id="player2-manual-choice" class="manual-choice-container" style="display: none;">
-                    <span class="choice-label">Opponent Move:</span>
-                    <div class="segmented-control">
-                        <button type="button" id="p2-cooperate" class="segmented-btn active" onclick="setManualChoice(2, 'cooperate')">Cooperate</button>
-                        <button type="button" id="p2-betray" class="segmented-btn" onclick="setManualChoice(2, 'betray')">Betray</button>
+
+            <button class="play-btn start-btn" onclick="startGame()">Start Game</button>
+        </div>
+
+        <!-- Active Game Screen -->
+        <div id="game-screen" class="screen-section" style="display: none;">
+            <!-- Top Rules & Points Banner -->
+            <div class="rules-banner">
+                <div class="rules-banner-header">Rules & Point System</div>
+                <div class="rules-badges">
+                    <div class="rule-badge cooperate">🤝 Both Cooperate: +<input type="number" id="banner-cc" class="banner-num-input" value="3"> pts</div>
+                    <div class="rule-badge betray">⚔️ Both Betray: +<input type="number" id="banner-dd" class="banner-num-input" value="1"> pt</div>
+                    <div class="rule-badge asymmetric">⚖️ Betray vs Cooperate: +<input type="number" id="banner-t" class="banner-num-input" value="5"> pts / +<input type="number" id="banner-s" class="banner-num-input" value="0"> pts</div>
+                </div>
+            </div>
+
+            <div class="strategy-selectors">
+                <div class="selector-box">
+                    <label for="player1-strategy">Player 1 Strategy:</label>
+                    <select id="player1-strategy" onchange="handleStrategyChange()">
+                        <option value="manual">Manual (You)</option>
+                        <option value="angel">Angel (Always Cooperates)</option>
+                        <option value="snake">Snake (Always Betrays)</option>
+                        <option value="titfortat">Tit for Tat</option>
+                        <option value="random">Random</option>
+                        <option value="grudger">Grudger</option>
+                    </select>
+                    <div id="player1-manual-choice" class="manual-choice-container">
+                        <span class="choice-label">Your Move:</span>
+                        <div class="segmented-control">
+                            <button type="button" id="p1-cooperate" class="segmented-btn active" onclick="setManualChoice(1, 'cooperate')">Cooperate</button>
+                            <button type="button" id="p1-betray" class="segmented-btn" onclick="setManualChoice(1, 'betray')">Betray</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="selector-box">
+                    <label for="player2-strategy">Player 2 Strategy:</label>
+                    <select id="player2-strategy" onchange="handleStrategyChange()">
+                        <option value="manual">Manual</option>
+                        <option value="angel" selected>Angel (Always Cooperates)</option>
+                        <option value="snake">Snake (Always Betrays)</option>
+                        <option value="titfortat">Tit for Tat</option>
+                        <option value="random">Random</option>
+                        <option value="grudger">Grudger</option>
+                    </select>
+                    <div id="player2-manual-choice" class="manual-choice-container" style="display: none;">
+                        <span class="choice-label">Opponent Move:</span>
+                        <div class="segmented-control">
+                            <button type="button" id="p2-cooperate" class="segmented-btn active" onclick="setManualChoice(2, 'cooperate')">Cooperate</button>
+                            <button type="button" id="p2-betray" class="segmented-btn" onclick="setManualChoice(2, 'betray')">Betray</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="score-board">
+                <div>
+                    <h2>You</h2>
+                    <p id="player-score">0</p>
+                </div>
+                <div>
+                    <h2>Opponent</h2>
+                    <p id="ai-score">0</p>
+                </div>
+            </div>
+
+            <div class="round-box">
+                <p>Round: <span id="round">1</span> / 10</p>
+            </div>
+
+            <div class="buttons">
+                <button id="btn-play-round" class="play-btn" onclick="playRound()">Play Round</button>
+            </div>
+
+            <div class="result-box">
+                <p id="result">Make your first move.</p>
+            </div>
+
+            <!-- Match History Section -->
+            <div id="game-history-card" class="game-history-card" style="display: none;">
+                <h3>Match History</h3>
+                <div class="table-container history-table-container">
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Round</th>
+                                <th>You (Player 1)</th>
+                                <th>Opponent (Player 2)</th>
+                                <th>Payoffs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button class="reset-btn play-btn reset-game-btn" onclick="resetGame()">Reset Game</button>
+        </div>
+
+        <!-- Strategy Arena Screen -->
+        <div id="arena-screen" class="screen-section" style="display: none;">
+            <!-- Welcome/Guide Card -->
+            <div class="arena-guide-card">
+                <h2>Welcome to the Strategy Arena! ⚔️</h2>
+                <p>Create your own automated strategy and see how it performs in a round-robin tournament against all other strategies.</p>
+                <div class="guide-steps">
+                    <div class="step-item">
+                        <span class="step-num">1</span>
+                        <div>
+                            <strong>Choose or Code</strong>
+                            <p>Pick a template or write custom Python logic using round histories.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num">2</span>
+                        <div>
+                            <strong>Validate & Save</strong>
+                            <p>Give it a name and click "Save Strategy". We'll verify it works correctly.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num">3</span>
+                        <div>
+                            <strong>Battle & Analyze</strong>
+                            <p>Run the round-robin tournament and study the Leaderboard & matchup Matrix!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arena-layout">
+                <!-- Left Column: Strategy Management -->
+                <div class="arena-col-left">
+                    <div class="arena-card">
+                        <h3>Create Custom Strategy</h3>
+                        <div class="input-group">
+                            <label for="strategy-name">Strategy Name</label>
+                            <input type="text" id="strategy-name" placeholder="E.g., Detective" maxlength="20">
+                        </div>
+                        <div class="input-group">
+                            <label for="strategy-template">Select Template</label>
+                            <select id="strategy-template" onchange="loadTemplate()">
+                                <option value="" selected>-- Blank / Custom --</option>
+                                <option value="titfortwotats">Tit for Two Tats (Forgiving)</option>
+                                <option value="alternator">Alternator</option>
+                                <option value="pavlov">Pavlov (Win-Stay, Lose-Shift)</option>
+                                <option value="majority">Majority Cooperator</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="strategy-code">Python Logic</label>
+                            <div class="editor-container">
+                                <textarea id="strategy-code" rows="10" spellcheck="false" placeholder="# Write Python code here...
+# Available inputs: my_history, opponent_history
+# Both are lists containing 'cooperate' or 'betray'
+# Return 'cooperate' or 'betray'
+
+return 'cooperate'"></textarea>
+                            </div>
+                            <div class="code-help">
+                                <div class="help-section">
+                                    <strong>📚 Coding Cheatsheet:</strong>
+                                    <ul>
+                                        <li><code>my_history</code>: List of your moves (e.g., <code>['cooperate']</code>)</li>
+                                        <li><code>opponent_history</code>: List of opponent's moves</li>
+                                        <li><code>len(my_history)</code>: Rounds played so far</li>
+                                        <li><code>random.random()</code>: Random float 0–1 (<code>random</code> module is pre-imported)</li>
+                                    </ul>
+                                </div>
+                                <div class="help-section">
+                                    <strong>💡 Simple Examples:</strong>
+                                    <ul>
+                                        <li><code>return "cooperate"</code> <span class="dim">(Always cooperate)</span></li>
+                                        <li><code>return "betray"</code> <span class="dim">(Always betray)</span></li>
+                                        <li><code>return "betray" if "betray" in opponent_history else "cooperate"</code> <span class="dim">(Grudger)</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="strategy-validation-msg" class="validation-msg"></div>
+                        <button class="play-btn" onclick="saveCustomStrategy()">Save Strategy</button>
+                    </div>
+
+                    <div class="arena-card">
+                        <h3>Active Strategies</h3>
+                        <div id="active-strategies-list" class="strategies-list">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Tournament & Standings -->
+                <div class="arena-col-right">
+                    <div class="arena-card">
+                        <h3>Arena Tournament</h3>
+                        <p class="card-desc">Simulate a round-robin tournament where every strategy plays against every other (including itself).</p>
+                        
+                        <div class="tournament-controls">
+                            <div class="rounds-control">
+                                <label for="tournament-rounds">Rounds per matchup:</label>
+                                <input type="number" id="tournament-rounds" class="banner-num-input" value="10" min="1" max="500">
+                            </div>
+                            <button class="play-btn start-btn" onclick="runTournament()">Run Tournament ⚔️</button>
+                        </div>
+                    </div>
+
+                    <div class="arena-card" id="leaderboard-card" style="display: none;">
+                        <h3>Leaderboard</h3>
+                        <div class="table-container">
+                            <table id="leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px;">Rank</th>
+                                        <th>Strategy</th>
+                                        <th>Total Score</th>
+                                        <th>Avg/Round</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="arena-card" id="matrix-card" style="display: none;">
+                        <h3>Matchup Matrix (Cross-Table)</h3>
+                        <p class="card-desc">Cell shows row strategy's score vs column strategy's score.</p>
+                        <div class="table-container matrix-container">
+                            <table id="matrix-table">
+                                <!-- Populated via JS -->
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="score-board">
-            <div>
-                <h2>You</h2>
-                <p id="player-score">0</p>
+        <!-- Data Sync Center -->
+        <div class="data-center-card">
+            <div class="data-center-header">
+                <h3>💾 Data Sync Center</h3>
+                <div class="sync-status-container">
+                    <span class="status-dot green" id="sync-indicator"></span>
+                    <span class="status-text" id="sync-status-text">Connected</span>
+                </div>
             </div>
-            <div>
-                <h2>Opponent</h2>
-                <p id="ai-score">0</p>
+            <p class="card-desc">Save game progress, payouts, custom strategies, and tournament results to the server's <code>data.json</code> file, or export/import locally.</p>
+            
+            <div class="data-center-actions">
+                <button type="button" class="data-btn save-btn" onclick="saveStateToServer()">Save to Server</button>
+                <button type="button" class="data-btn load-btn" onclick="loadStateFromServer()">Load from Server</button>
+                <button type="button" class="data-btn export-btn" onclick="exportStateAsFile()">Export File</button>
+                <button type="button" class="data-btn import-btn" onclick="triggerImportFile()">Import File</button>
+                <input type="file" id="import-file-input" style="display: none;" onchange="importStateFromFile(event)" accept=".json">
+            </div>
+
+            <div class="auto-save-control">
+                <label class="auto-save-label">
+                    <input type="checkbox" id="auto-save-checkbox" checked onchange="toggleAutoSave()">
+                    <span>Auto-Save to Server on changes</span>
+                </label>
             </div>
         </div>
-
-        <div class="round-box">
-            <p>Round: <span id="round">1</span> / 10</p>
-        </div>
-
-        <div class="buttons">
-            <button id="btn-play-round" class="play-btn" onclick="playRound()">Play Round</button>
-        </div>
-
-        <div class="result-box">
-            <p id="result">Make your first move.</p>
-        </div>
-
-        <button class="reset-btn" onclick="resetGame()">Reset Game</button>
     </div>
 
     <script src="{{ url_for('static', filename='static.js') }}"></script>

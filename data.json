@@ -1,0 +1,29 @@
+{
+  "settings": {
+    "payoff_cc": 3,
+    "payoff_dd": 1,
+    "payoff_t": 5,
+    "payoff_s": 0,
+    "player1_strategy": "manual",
+    "player2_strategy": "angel",
+    "max_rounds": 10,
+    "tournament_rounds": 8
+  },
+  "custom_strategies": {},
+  "game_history": {
+    "player_score": 0,
+    "ai_score": 0,
+    "round": 1,
+    "player_history": [],
+    "ai_history": [],
+    "last_result_message": "Make your first move.",
+    "history_visible": false,
+    "history_html": ""
+  },
+  "tournament_history": {
+    "leaderboard_visible": true,
+    "matrix_visible": true,
+    "leaderboard_html": "\n            <tr>\n                <td><span class=\"rank-badge rank-1\">1</span></td>\n                <td>\n                    <div style=\"display: flex; align-items: center; gap: 8px;\">\n                        <strong>Snake</strong>\n                        <span class=\"strategy-item-badge built-in\">Built-in</span>\n                    </div>\n                </td>\n                <td><strong>100</strong> pts</td>\n                <td>2.50 pts</td>\n            </tr>\n        \n            <tr>\n                <td><span class=\"rank-badge rank-2\">2</span></td>\n                <td>\n                    <div style=\"display: flex; align-items: center; gap: 8px;\">\n                        <strong>Tit for Tat</strong>\n                        <span class=\"strategy-item-badge built-in\">Built-in</span>\n                    </div>\n                </td>\n                <td><strong>94</strong> pts</td>\n                <td>2.35 pts</td>\n            </tr>\n        \n            <tr>\n                <td><span class=\"rank-badge rank-3\">3</span></td>\n                <td>\n                    <div style=\"display: flex; align-items: center; gap: 8px;\">\n                        <strong>Random</strong>\n                        <span class=\"strategy-item-badge built-in\">Built-in</span>\n                    </div>\n                </td>\n                <td><strong>94</strong> pts</td>\n                <td>2.35 pts</td>\n            </tr>\n        \n            <tr>\n                <td><span class=\"rank-normal\">4</span></td>\n                <td>\n                    <div style=\"display: flex; align-items: center; gap: 8px;\">\n                        <strong>Grudger</strong>\n                        <span class=\"strategy-item-badge built-in\">Built-in</span>\n                    </div>\n                </td>\n                <td><strong>92</strong> pts</td>\n                <td>2.30 pts</td>\n            </tr>\n        \n            <tr>\n                <td><span class=\"rank-normal\">5</span></td>\n                <td>\n                    <div style=\"display: flex; align-items: center; gap: 8px;\">\n                        <strong>Angel</strong>\n                        <span class=\"strategy-item-badge built-in\">Built-in</span>\n                    </div>\n                </td>\n                <td><strong>81</strong> pts</td>\n                <td>2.02 pts</td>\n            </tr>\n        ",
+    "matrix_html": "<thead><tr><th>Strategy</th><th>Angel</th><th>Snake</th><th>Tit for Tat</th><th>Random</th><th>Grudger</th></tr></thead><tbody><tr><td><strong>Angel</strong></td><td><span class=\"matrix-cell matrix-self\">24</span></td><td><span class=\"matrix-cell loss\">0 - 40</span></td><td><span class=\"matrix-cell tie\">24 - 24</span></td><td><span class=\"matrix-cell loss\">9 - 34</span></td><td><span class=\"matrix-cell tie\">24 - 24</span></td></tr><tr><td><strong>Snake</strong></td><td><span class=\"matrix-cell win\">40 - 0</span></td><td><span class=\"matrix-cell matrix-self\">8</span></td><td><span class=\"matrix-cell win\">12 - 7</span></td><td><span class=\"matrix-cell win\">28 - 3</span></td><td><span class=\"matrix-cell win\">12 - 7</span></td></tr><tr><td><strong>Tit for Tat</strong></td><td><span class=\"matrix-cell tie\">24 - 24</span></td><td><span class=\"matrix-cell loss\">7 - 12</span></td><td><span class=\"matrix-cell matrix-self\">24</span></td><td><span class=\"matrix-cell loss\">15 - 20</span></td><td><span class=\"matrix-cell tie\">24 - 24</span></td></tr><tr><td><strong>Random</strong></td><td><span class=\"matrix-cell win\">34 - 9</span></td><td><span class=\"matrix-cell loss\">3 - 28</span></td><td><span class=\"matrix-cell win\">20 - 15</span></td><td><span class=\"matrix-cell matrix-self\">14</span></td><td><span class=\"matrix-cell tie\">13 - 13</span></td></tr><tr><td><strong>Grudger</strong></td><td><span class=\"matrix-cell tie\">24 - 24</span></td><td><span class=\"matrix-cell loss\">7 - 12</span></td><td><span class=\"matrix-cell tie\">24 - 24</span></td><td><span class=\"matrix-cell tie\">13 - 13</span></td><td><span class=\"matrix-cell matrix-self\">24</span></td></tr></tbody>"
+  }
+}
