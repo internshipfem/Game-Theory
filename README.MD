@@ -24,4 +24,4 @@ Trust Loop is a simple Prisoner's Dilemma game built with Flask, HTML, CSS, and 
 Create virtual environment:
 
 ```bash
-python -m venv venv
+python -m venv venvz

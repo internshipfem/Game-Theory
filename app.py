@@ -122,15 +122,34 @@ SAFE_BUILTINS = {
 
 def _run_strategy_code(code, my_history, opponent_history):
     """
-    Wraps user code inside a function, executes it, and returns the result.
-    The user writes code using 'return "cooperate"' or 'return "betray"'.
-    """
-    # Indent every line of user code to place inside a function body
-    indented_code = textwrap.indent(code, "    ")
-    wrapped = f"def _user_strategy(my_history, opponent_history):\n{indented_code}"
+    Execute user-submitted Python strategy code and return the result.
 
+    Supports two formats:
+    1. A full function definition (def strategy(...): ...)
+       — The function is called directly.
+    2. Raw body code (if/return statements without a wrapping def)
+       — The code is wrapped inside a generated function automatically.
+    """
     safe_globals = {"__builtins__": SAFE_BUILTINS, "random": random}
     local_ns = {}
+
+    # Check if the code defines a top-level 'strategy' function
+    stripped = code.strip()
+    if stripped.startswith("def strategy(") or stripped.startswith("def strategy ("):
+        # User provided a full function definition — exec it and call directly
+        exec(code, safe_globals, local_ns)
+        if "strategy" not in local_ns:
+            raise ValueError(
+                "Code starts with 'def strategy(...)' but no 'strategy' "
+                "function was found after execution."
+            )
+        func = local_ns["strategy"]
+        result = func(list(my_history), list(opponent_history))
+        return result
+
+    # Fallback: wrap raw body code inside a generated function
+    indented_code = textwrap.indent(code, "    ")
+    wrapped = f"def _user_strategy(my_history, opponent_history):\n{indented_code}"
 
     exec(wrapped, safe_globals, local_ns)
     func = local_ns["_user_strategy"]

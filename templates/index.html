@@ -18,6 +18,7 @@
         <div id="tabs-header" class="tabs-header" style="display: none;">
             <button id="tab-game-btn" class="tab-btn active" onclick="switchTab('game')">🕹️ Game Mode</button>
             <button id="tab-arena-btn" class="tab-btn" onclick="switchTab('arena')">🏆 Strategy Arena</button>
+            <button id="tab-people-btn" class="tab-btn" onclick="switchTab('people')">👥 People Mode</button>
         </div>
 
         <!-- Intro/Parameters Screen -->
@@ -207,6 +208,28 @@
                                 <option value="majority">Majority Cooperator</option>
                             </select>
                         </div>
+
+                        <!-- Drag & Drop .py file upload -->
+                        <div class="input-group">
+                            <label>Or Upload a .py File</label>
+                            <div id="strategy-dropzone" class="strategy-dropzone" onclick="document.getElementById('strategy-file-input').click()">
+                                <div class="dropzone-content">
+                                    <span class="dropzone-icon">📄</span>
+                                    <span class="dropzone-text">Drag & drop your <strong>.py</strong> file here</span>
+                                    <span class="dropzone-subtext">or click to browse</span>
+                                </div>
+                                <div class="dropzone-active-content" style="display:none;">
+                                    <span class="dropzone-icon">⬇️</span>
+                                    <span class="dropzone-text">Drop it!</span>
+                                </div>
+                            </div>
+                            <input type="file" id="strategy-file-input" accept=".py" style="display:none;" onchange="handleStrategyFileSelect(event)">
+                            <div id="strategy-file-info" class="strategy-file-info" style="display:none;">
+                                <span id="strategy-file-name" class="strategy-file-name"></span>
+                                <button type="button" class="strategy-file-remove" onclick="clearStrategyFile()">✕</button>
+                            </div>
+                        </div>
+
                         <div class="input-group">
                             <label for="strategy-code">Python Logic</label>
                             <div class="editor-container">
@@ -288,6 +311,166 @@ return 'cooperate'"></textarea>
                         <p class="card-desc">Cell shows row strategy's score vs column strategy's score.</p>
                         <div class="table-container matrix-container">
                             <table id="matrix-table">
+                                <!-- Populated via JS -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- People Mode Screen -->
+        <div id="people-screen" class="screen-section" style="display: none;">
+            <!-- Guide Card -->
+            <div class="arena-guide-card people-guide">
+                <h2>People Mode 👥</h2>
+                <p>Survey real people, assign them strategies, and watch them compete in a Prisoner's Dilemma tournament!</p>
+                <div class="guide-steps">
+                    <div class="step-item">
+                        <span class="step-num people-step">1</span>
+                        <div>
+                            <strong>Add People</strong>
+                            <p>Enter names of real people you want to survey.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num people-step">2</span>
+                        <div>
+                            <strong>Ask Their Strategy</strong>
+                            <p>Pick a preset or let them describe their own strategy as code!</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num people-step">3</span>
+                        <div>
+                            <strong>Simulate &amp; Compare</strong>
+                            <p>Run rounds and see who wins the trust game!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arena-layout">
+                <!-- Left Column: Add People -->
+                <div class="arena-col-left">
+                    <div class="arena-card people-card">
+                        <h3>👤 Add a Person</h3>
+                        <div class="input-group">
+                            <label for="person-name">Person's Name</label>
+                            <input type="text" id="person-name" placeholder="E.g., Alice, Bob..." maxlength="25">
+                        </div>
+                        <div class="input-group">
+                            <label for="person-strategy">Their Strategy</label>
+                            <select id="person-strategy" onchange="togglePersonScriptEditor()">
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+
+                        <!-- Strategy Builder (hidden by default) -->
+                        <div id="person-script-editor" class="person-script-editor" style="display: none;">
+                            <div class="strat-builder">
+                                <div class="strat-rule">
+                                    <span class="rule-emoji">🎬</span>
+                                    <label>Start by</label>
+                                    <select id="rule-default-move">
+                                        <option value="cooperate">Cooperating</option>
+                                        <option value="betray">Betraying</option>
+                                    </select>
+                                </div>
+
+                                <div class="strat-rule">
+                                    <span class="rule-emoji">🔄</span>
+                                    <label>After round</label>
+                                    <input type="number" id="rule-switch-round" class="rule-num" value="0" min="0" max="500" placeholder="0">
+                                    <select id="rule-switch-action">
+                                        <option value="none">do nothing (keep going)</option>
+                                        <option value="switch_cooperate">switch to cooperate</option>
+                                        <option value="switch_betray">switch to betray</option>
+                                        <option value="alternate">alternate each round</option>
+                                    </select>
+                                </div>
+
+                                <div class="strat-rule">
+                                    <span class="rule-emoji">😠</span>
+                                    <label>If opponent betrays</label>
+                                    <select id="rule-on-betray">
+                                        <option value="ignore">ignore it (keep my plan)</option>
+                                        <option value="betray_back">betray them back next round</option>
+                                        <option value="betray_forever">betray forever after</option>
+                                        <option value="forgive_once">forgive once, then betray</option>
+                                    </select>
+                                </div>
+
+                                <div class="strat-rule">
+                                    <span class="rule-emoji">🎲</span>
+                                    <label>Random betrayal chance</label>
+                                    <input type="number" id="rule-random-pct" class="rule-num" value="0" min="0" max="100" placeholder="0">
+                                    <span class="rule-suffix">%</span>
+                                </div>
+                            </div>
+                            <div class="strat-preview" id="strat-preview">
+                                <!-- Generated preview will appear here -->
+                            </div>
+                        </div>
+
+                        <div class="people-add-actions">
+                            <button class="play-btn people-add-btn" onclick="addPerson()">+ Add Person</button>
+                            <button class="play-btn people-random-btn" onclick="addRandomPerson()">🎲 Random</button>
+                        </div>
+                    </div>
+
+                    <div class="arena-card people-card">
+                        <h3>📋 People Roster <span id="people-count-badge" class="people-count-badge">0</span></h3>
+                        <div id="people-roster" class="people-roster">
+                            <div class="people-empty-state">
+                                <span class="empty-icon">👻</span>
+                                <p>No people added yet.<br>Add some people to get started!</p>
+                            </div>
+                        </div>
+                        <button class="play-btn reset-game-btn" onclick="clearAllPeople()" style="margin-top: 8px;">Clear All</button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Simulation -->
+                <div class="arena-col-right">
+                    <div class="arena-card people-card">
+                        <h3>⚔️ People Tournament</h3>
+                        <p class="card-desc">Run a round-robin tournament where every person plays against every other person using their chosen strategy.</p>
+                        <div class="tournament-controls">
+                            <div class="rounds-control">
+                                <label for="people-tournament-rounds">Rounds per matchup:</label>
+                                <input type="number" id="people-tournament-rounds" class="banner-num-input" value="10" min="1" max="500">
+                            </div>
+                            <button id="btn-run-people-tournament" class="play-btn start-btn people-run-btn" onclick="runPeopleTournament()" disabled>Run Tournament ⚔️</button>
+                        </div>
+                        <div id="people-tournament-status" class="people-tournament-status" style="display: none;"></div>
+                    </div>
+
+                    <div class="arena-card people-card" id="people-leaderboard-card" style="display: none;">
+                        <h3>🏆 People Leaderboard</h3>
+                        <div class="table-container">
+                            <table id="people-leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px;">Rank</th>
+                                        <th>Person</th>
+                                        <th>Strategy</th>
+                                        <th>Total Score</th>
+                                        <th>Avg/Round</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="arena-card people-card" id="people-matrix-card" style="display: none;">
+                        <h3>📊 Head-to-Head Results</h3>
+                        <p class="card-desc">Each cell shows the row person's score vs the column person's score.</p>
+                        <div class="table-container matrix-container">
+                            <table id="people-matrix-table">
                                 <!-- Populated via JS -->
                             </table>
                         </div>
