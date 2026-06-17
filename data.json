@@ -31,7 +31,7 @@
     "ai_history": [
       "cooperate"
     ],
-    "last_result_message": "Player 1 (You) chose cooperate.\nPlayer 2 (angel) chose cooperate.\n\nGame Master: Both cooperated. A win-win (+3 each)!",
+    "last_result_message": "Player 1 (You) chose cooperate.Player 2 (angel) chose cooperate.Game Master: Both cooperated. A win-win (+3 each)!",
     "history_visible": true,
     "history_html": "\n                <tr>\n                    <td><strong>#1</strong></td>\n                    <td><span class=\"move-badge cooperate\">\ud83e\udd1d Cooperate</span></td>\n                    <td><span class=\"move-badge cooperate\">\ud83e\udd1d Cooperate</span></td>\n                    <td><span class=\"payoff-badge\">+3 / +3</span></td>\n                </tr>\n            "
   },

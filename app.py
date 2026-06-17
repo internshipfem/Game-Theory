@@ -1,10 +1,14 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, Blueprint, render_template, request, jsonify
 import os
 import json
 import random
 import textwrap
 
-app = Flask(__name__)
+# --- Blueprint for /game/ prefix ---
+game_bp = Blueprint('game', __name__,
+                    template_folder='templates',
+                    static_folder='static',
+                    static_url_path='/static')
 
 DATA_FILE = "data.json"
 
@@ -37,12 +41,12 @@ DEFAULT_STATE = {
 }
 
 
-@app.route("/")
+@game_bp.route("/")
 def home():
     return render_template("index.html")
 
 
-@app.route("/api/state", methods=["GET"])
+@game_bp.route("/api/state", methods=["GET"])
 def get_state():
     if not os.path.exists(DATA_FILE):
         try:
@@ -59,7 +63,7 @@ def get_state():
         return jsonify(DEFAULT_STATE)
 
 
-@app.route("/api/state", methods=["POST"])
+@game_bp.route("/api/state", methods=["POST"])
 def save_state():
     try:
         data = request.get_json() or {}
@@ -71,7 +75,7 @@ def save_state():
 
 
 
-@app.route("/game_master", methods=["POST"])
+@game_bp.route("/game_master", methods=["POST"])
 def game_master():
     data = request.get_json() or {}
     player_move = data.get("player_move")
@@ -157,7 +161,7 @@ def _run_strategy_code(code, my_history, opponent_history):
     return result
 
 
-@app.route("/api/execute_strategy", methods=["POST"])
+@game_bp.route("/api/execute_strategy", methods=["POST"])
 def execute_strategy():
     """Execute a user's Python strategy code for a single move."""
     data = request.get_json() or {}
@@ -179,7 +183,7 @@ def execute_strategy():
         return jsonify({"error": f"Execution error: {str(e)}"}), 400
 
 
-@app.route("/api/validate_strategy", methods=["POST"])
+@game_bp.route("/api/validate_strategy", methods=["POST"])
 def validate_strategy():
     """Validate a user's Python strategy by running 3 test cases."""
     data = request.get_json() or {}
@@ -211,6 +215,23 @@ def validate_strategy():
     return jsonify({"valid": True})
 
 
+# --- App Factory ---
+
+def create_app():
+    app = Flask(__name__)
+
+    # Register the game blueprint under /game/ prefix
+    app.register_blueprint(game_bp, url_prefix='/game')
+
+    # Redirect root to /game/
+    @app.route("/")
+    def root_redirect():
+        from flask import redirect
+        return redirect("/game/")
+
+    return app
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
-    
+    app = create_app()
+    app.run(host="0.0.0.0", port=3000, debug=True)

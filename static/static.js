@@ -1,3 +1,6 @@
+// Base URL prefix for all API calls (matches the Flask Blueprint prefix)
+const BASE_URL = "/game";
+
 let playerScore = 0;
 let aiScore = 0;
 let round = 1;
@@ -99,7 +102,7 @@ return "betray" if betrays > len(opponent_history) / 2 else "cooperate"`
 
 // Helper: execute a Python strategy via the server
 async function executePythonStrategy(code, myHistory, opponentHistory) {
-    const response = await fetch("/api/execute_strategy", {
+    const response = await fetch(BASE_URL + "/api/execute_strategy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -239,7 +242,7 @@ async function playRound() {
     const payoff_s = parseInt(document.getElementById("param-s").value) || 0;
 
     try {
-        const response = await fetch("/game_master", {
+        const response = await fetch(BASE_URL + "/game_master", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -600,7 +603,7 @@ async function saveCustomStrategy() {
         msgDiv.classList.add("info");
         msgDiv.style.display = "block";
 
-        const response = await fetch("/api/validate_strategy", {
+        const response = await fetch(BASE_URL + "/api/validate_strategy", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code: code })
@@ -1708,7 +1711,7 @@ async function saveStateToServer(silent = false) {
     const statusText = document.getElementById("sync-status-text");
 
     try {
-        const response = await fetch("/api/state", {
+        const response = await fetch(BASE_URL + "/api/state", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1749,7 +1752,7 @@ async function loadStateFromServer() {
     }
 
     try {
-        const response = await fetch("/api/state");
+        const response = await fetch(BASE_URL + "/api/state");
         if (!response.ok) {
             throw new Error("HTTP error " + response.status);
         }
