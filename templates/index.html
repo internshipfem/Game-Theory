@@ -16,9 +16,9 @@
 
         <!-- Tabs Navigation -->
         <div id="tabs-header" class="tabs-header" style="display: none;">
-            <button id="tab-game-btn" class="tab-btn active" onclick="switchTab('game')">🕹️ Game Mode</button>
-            <button id="tab-arena-btn" class="tab-btn" onclick="switchTab('arena')">🏆 Strategy Arena</button>
-            <button id="tab-people-btn" class="tab-btn" onclick="switchTab('people')">👥 People Mode</button>
+            <button id="tab-game-btn" class="tab-btn active" onclick="switchTab('game')">Game Mode</button>
+            <button id="tab-arena-btn" class="tab-btn" onclick="switchTab('arena')">Strategy Arena</button>
+            <button id="tab-people-btn" class="tab-btn" onclick="switchTab('people')">People Mode</button>
         </div>
 
         <!-- Intro/Parameters Screen -->
@@ -40,20 +40,16 @@
                 <h3>Payout Parameters</h3>
                 <div class="payoff-matrix">
                     <div class="payoff-item cooperate-cooperate">
-                        <span class="payoff-label">🤝 Both Cooperate</span>
-                        <span class="payoff-reward">+3 points each</span>
+                        <span class="payoff-label">Both Cooperate</span>
                     </div>
                     <div class="payoff-item betray-betray">
-                        <span class="payoff-label">⚔️ Both Betray</span>
-                        <span class="payoff-reward">+1 point each</span>
+                        <span class="payoff-label">Both Betray</span>
                     </div>
                     <div class="payoff-item player-betrays">
-                        <span class="payoff-label">😈 You Betray & They Cooperate</span>
-                        <span class="payoff-reward">+5 for you, +0 for them</span>
+                        <span class="payoff-label">You Betray & They Cooperate</span>
                     </div>
                     <div class="payoff-item player-cooperates">
-                        <span class="payoff-label">🥺 You Cooperate & They Betray</span>
-                        <span class="payoff-reward">+0 for you, +5 for them</span>
+                        <span class="payoff-label">You Cooperate & They Betray</span>
                     </div>
                 </div>
             </div>
@@ -67,9 +63,9 @@
             <div class="rules-banner">
                 <div class="rules-banner-header">Rules & Point System</div>
                 <div class="rules-badges">
-                    <div class="rule-badge cooperate">🤝 Both Cooperate: +<input type="number" id="banner-cc" class="banner-num-input" value="3"> pts</div>
-                    <div class="rule-badge betray">⚔️ Both Betray: +<input type="number" id="banner-dd" class="banner-num-input" value="1"> pt</div>
-                    <div class="rule-badge asymmetric">⚖️ Betray vs Cooperate: +<input type="number" id="banner-t" class="banner-num-input" value="5"> pts / +<input type="number" id="banner-s" class="banner-num-input" value="0"> pts</div>
+                    <div class="rule-badge cooperate">Both Cooperate: +<input type="number" id="banner-cc" class="banner-num-input" value="3"> pts</div>
+                    <div class="rule-badge betray">Both Betray: +<input type="number" id="banner-dd" class="banner-num-input" value="1"> pt</div>
+                    <div class="rule-badge asymmetric">Betray vs Cooperate: +<input type="number" id="banner-t" class="banner-num-input" value="5"> pts / +<input type="number" id="banner-s" class="banner-num-input" value="0"> pts</div>
                 </div>
             </div>
 
@@ -162,7 +158,7 @@
         <div id="arena-screen" class="screen-section" style="display: none;">
             <!-- Welcome/Guide Card -->
             <div class="arena-guide-card">
-                <h2>Welcome to the Strategy Arena! ⚔️</h2>
+                <h2>Welcome to the Strategy Arena!</h2>
                 <p>Create your own automated strategy and see how it performs in a round-robin tournament against all other strategies.</p>
                 <div class="guide-steps">
                     <div class="step-item">
@@ -214,12 +210,12 @@
                             <label>Or Upload a .py File</label>
                             <div id="strategy-dropzone" class="strategy-dropzone" onclick="document.getElementById('strategy-file-input').click()">
                                 <div class="dropzone-content">
-                                    <span class="dropzone-icon">📄</span>
+                                    <span class="dropzone-icon"></span>
                                     <span class="dropzone-text">Drag & drop your <strong>.py</strong> file here</span>
                                     <span class="dropzone-subtext">or click to browse</span>
                                 </div>
                                 <div class="dropzone-active-content" style="display:none;">
-                                    <span class="dropzone-icon">⬇️</span>
+                                    <span class="dropzone-icon"></span>
                                     <span class="dropzone-text">Drop it!</span>
                                 </div>
                             </div>
@@ -283,7 +279,7 @@ return 'cooperate'"></textarea>
                                 <label for="tournament-rounds">Rounds per matchup:</label>
                                 <input type="number" id="tournament-rounds" class="banner-num-input" value="10" min="1" max="500">
                             </div>
-                            <button class="play-btn start-btn" onclick="runTournament()">Run Tournament ⚔️</button>
+                            <button class="play-btn start-btn" onclick="runTournament()">Run Tournament</button>
                         </div>
                     </div>
 
@@ -323,7 +319,7 @@ return 'cooperate'"></textarea>
         <div id="people-screen" class="screen-section" style="display: none;">
             <!-- Guide Card -->
             <div class="arena-guide-card people-guide">
-                <h2>People Mode 👥</h2>
+                <h2>People Mode</h2>
                 <p>Survey real people, assign them strategies, and watch them compete in a Prisoner's Dilemma tournament!</p>
                 <div class="guide-steps">
                     <div class="step-item">
@@ -354,7 +350,7 @@ return 'cooperate'"></textarea>
                 <!-- Left Column: Add People -->
                 <div class="arena-col-left">
                     <div class="arena-card people-card">
-                        <h3>👤 Add a Person</h3>
+                        <h3>Add a Person</h3>
                         <div class="input-group">
                             <label for="person-name">Person's Name</label>
                             <input type="text" id="person-name" placeholder="E.g., Alice, Bob..." maxlength="25">
@@ -370,7 +366,7 @@ return 'cooperate'"></textarea>
                         <div id="person-script-editor" class="person-script-editor" style="display: none;">
                             <div class="strat-builder">
                                 <div class="strat-rule">
-                                    <span class="rule-emoji">🎬</span>
+                                    <span class="rule-emoji"></span>
                                     <label>Start by</label>
                                     <select id="rule-default-move">
                                         <option value="cooperate">Cooperating</option>
@@ -379,7 +375,7 @@ return 'cooperate'"></textarea>
                                 </div>
 
                                 <div class="strat-rule">
-                                    <span class="rule-emoji">🔄</span>
+                                    <span class="rule-emoji"></span>
                                     <label>After round</label>
                                     <input type="number" id="rule-switch-round" class="rule-num" value="0" min="0" max="500" placeholder="0">
                                     <select id="rule-switch-action">
@@ -391,7 +387,7 @@ return 'cooperate'"></textarea>
                                 </div>
 
                                 <div class="strat-rule">
-                                    <span class="rule-emoji">😠</span>
+                                    <span class="rule-emoji"></span>
                                     <label>If opponent betrays</label>
                                     <select id="rule-on-betray">
                                         <option value="ignore">ignore it (keep my plan)</option>
@@ -402,7 +398,7 @@ return 'cooperate'"></textarea>
                                 </div>
 
                                 <div class="strat-rule">
-                                    <span class="rule-emoji">🎲</span>
+                                    <span class="rule-emoji"></span>
                                     <label>Random betrayal chance</label>
                                     <input type="number" id="rule-random-pct" class="rule-num" value="0" min="0" max="100" placeholder="0">
                                     <span class="rule-suffix">%</span>
@@ -415,15 +411,15 @@ return 'cooperate'"></textarea>
 
                         <div class="people-add-actions">
                             <button class="play-btn people-add-btn" onclick="addPerson()">+ Add Person</button>
-                            <button class="play-btn people-random-btn" onclick="addRandomPerson()">🎲 Random</button>
+                            <button class="play-btn people-random-btn" onclick="addRandomPerson()">Random</button>
                         </div>
                     </div>
 
                     <div class="arena-card people-card">
-                        <h3>📋 People Roster <span id="people-count-badge" class="people-count-badge">0</span></h3>
+                        <h3>People Roster <span id="people-count-badge" class="people-count-badge">0</span></h3>
                         <div id="people-roster" class="people-roster">
                             <div class="people-empty-state">
-                                <span class="empty-icon">👻</span>
+                                <span class="empty-icon"></span>
                                 <p>No people added yet.<br>Add some people to get started!</p>
                             </div>
                         </div>
@@ -434,20 +430,20 @@ return 'cooperate'"></textarea>
                 <!-- Right Column: Simulation -->
                 <div class="arena-col-right">
                     <div class="arena-card people-card">
-                        <h3>⚔️ People Tournament</h3>
+                        <h3>People Tournament</h3>
                         <p class="card-desc">Run a round-robin tournament where every person plays against every other person using their chosen strategy.</p>
                         <div class="tournament-controls">
                             <div class="rounds-control">
                                 <label for="people-tournament-rounds">Rounds per matchup:</label>
                                 <input type="number" id="people-tournament-rounds" class="banner-num-input" value="10" min="1" max="500">
                             </div>
-                            <button id="btn-run-people-tournament" class="play-btn start-btn people-run-btn" onclick="runPeopleTournament()" disabled>Run Tournament ⚔️</button>
+                            <button id="btn-run-people-tournament" class="play-btn start-btn people-run-btn" onclick="runPeopleTournament()" disabled>Run Tournament</button>
                         </div>
                         <div id="people-tournament-status" class="people-tournament-status" style="display: none;"></div>
                     </div>
 
                     <div class="arena-card people-card" id="people-leaderboard-card" style="display: none;">
-                        <h3>🏆 People Leaderboard</h3>
+                        <h3>People Leaderboard</h3>
                         <div class="table-container">
                             <table id="people-leaderboard-table">
                                 <thead>
@@ -467,7 +463,7 @@ return 'cooperate'"></textarea>
                     </div>
 
                     <div class="arena-card people-card" id="people-matrix-card" style="display: none;">
-                        <h3>📊 Head-to-Head Results</h3>
+                        <h3>Head-to-Head Results</h3>
                         <p class="card-desc">Each cell shows the row person's score vs the column person's score.</p>
                         <div class="table-container matrix-container">
                             <table id="people-matrix-table">
@@ -482,7 +478,7 @@ return 'cooperate'"></textarea>
         <!-- Data Sync Center -->
         <div class="data-center-card">
             <div class="data-center-header">
-                <h3>💾 Data Sync Center</h3>
+                <h3>Data Sync Center</h3>
                 <div class="sync-status-container">
                     <span class="status-dot green" id="sync-indicator"></span>
                     <span class="status-text" id="sync-status-text">Connected</span>
@@ -501,7 +497,7 @@ return 'cooperate'"></textarea>
             <div class="auto-save-control">
                 <label class="auto-save-label">
                     <input type="checkbox" id="auto-save-checkbox" checked onchange="toggleAutoSave()">
-                    <span>Auto-Save to Server on changes</span>
+                    <span>Auto-save changes locally</span>
                 </label>
             </div>
         </div>

@@ -41,6 +41,30 @@ DEFAULT_STATE = {
 }
 
 
+def _read_data():
+    if not os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "w") as f:
+                json.dump(DEFAULT_STATE, f, indent=2)
+            return DEFAULT_STATE.copy()
+        except Exception:
+            return DEFAULT_STATE.copy()
+    try:
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    except Exception:
+        return DEFAULT_STATE.copy()
+
+
+def _write_data(data):
+    try:
+        with open(DATA_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+        return True
+    except Exception:
+        return False
+
+
 @game_bp.route("/")
 def home():
     return render_template("index.html")
@@ -48,30 +72,84 @@ def home():
 
 @game_bp.route("/api/state", methods=["GET"])
 def get_state():
-    if not os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "w") as f:
-                json.dump(DEFAULT_STATE, f, indent=2)
-            return jsonify(DEFAULT_STATE)
-        except Exception as e:
-            return jsonify({"error": f"Failed to initialize data file: {str(e)}"}), 500
-    try:
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-        return jsonify(data)
-    except Exception as e:
-        return jsonify(DEFAULT_STATE)
+    return jsonify(_read_data())
 
 
 @game_bp.route("/api/state", methods=["POST"])
 def save_state():
-    try:
-        data = request.get_json() or {}
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=2)
+    data = request.get_json() or {}
+    if _write_data(data):
         return jsonify({"status": "success", "message": "State saved to data.json successfully!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Failed to save state: {str(e)}"}), 500
+    else:
+        return jsonify({"status": "error", "message": "Failed to save state."}), 500
+
+
+@game_bp.route("/api/custom_strategies", methods=["GET"])
+def get_custom_strategies():
+    data = _read_data()
+    return jsonify(data.get("custom_strategies", {}))
+
+
+@game_bp.route("/api/custom_strategies", methods=["POST"])
+def post_custom_strategy():
+    data = request.get_json() or {}
+    name = data.get("name", "").strip()
+    code = data.get("codeText", "")
+
+    if not name:
+        return jsonify({"error": "Please specify a strategy name."}), 400
+    if not code.strip():
+        return jsonify({"error": "No code provided."}), 400
+
+    # Validate Python code (run the test cases using _run_strategy_code)
+    test_cases = [
+        ([], []),
+        (["cooperate"], ["betray"]),
+        (["betray", "cooperate"], ["cooperate", "betray"]),
+    ]
+
+    for i, (my_hist, opp_hist) in enumerate(test_cases):
+        try:
+            result = _run_strategy_code(code, my_hist, opp_hist)
+            if result not in ("cooperate", "betray"):
+                return jsonify({
+                    "error": f"Test case {i+1}: Must return 'cooperate' or 'betray'. Got: {repr(result)}"
+                }), 400
+        except Exception as e:
+            return jsonify({
+                "error": f"Test case {i+1} error: {str(e)}"
+            }), 400
+
+    # Save to data.json
+    state = _read_data()
+    if "custom_strategies" not in state:
+        state["custom_strategies"] = {}
+    
+    normalized_id = name.lower().replace(" ", "_")
+    normalized_id = "".join([c for c in normalized_id if c.isalnum() or c == "_"])
+    
+    state["custom_strategies"][normalized_id] = {
+        "name": name,
+        "codeText": code,
+        "description": "User defined strategy"
+    }
+
+    if _write_data(state):
+        return jsonify({"status": "success", "strategy_id": normalized_id})
+    else:
+        return jsonify({"error": "Failed to save strategy to server data file."}), 500
+
+
+@game_bp.route("/api/custom_strategies/<strategy_id>", methods=["DELETE"])
+def delete_custom_strategy_api(strategy_id):
+    state = _read_data()
+    if "custom_strategies" in state and strategy_id in state["custom_strategies"]:
+        del state["custom_strategies"][strategy_id]
+        if _write_data(state):
+            return jsonify({"status": "success", "message": f"Strategy {strategy_id} deleted."})
+        else:
+            return jsonify({"error": "Failed to update server data file."}), 500
+    return jsonify({"error": "Strategy not found."}), 404
 
 
 

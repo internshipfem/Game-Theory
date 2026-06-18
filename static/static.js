@@ -279,8 +279,8 @@ async function playRound() {
         if (historyCard && historyTableBody) {
             historyCard.style.display = "block";
             const currentRound = playerHistory.length;
-            const p1MoveText = playerMove === "cooperate" ? "🤝 Cooperate" : "⚔️ Betray";
-            const p2MoveText = aiMove === "cooperate" ? "🤝 Cooperate" : "⚔️ Betray";
+            const p1MoveText = playerMove === "cooperate" ? "Cooperate" : "Betray";
+            const p2MoveText = aiMove === "cooperate" ? "Cooperate" : "Betray";
             const p1Class = playerMove === "cooperate" ? "cooperate" : "betray";
             const p2Class = aiMove === "cooperate" ? "cooperate" : "betray";
             const rowHTML = `
@@ -598,23 +598,24 @@ async function saveCustomStrategy() {
     }
 
     try {
-        // Validate Python code on the server
-        msgDiv.innerText = "Validating Python code...";
+        // Validate and save strategy on the server
+        msgDiv.innerText = "Validating and saving strategy on server...";
         msgDiv.classList.add("info");
         msgDiv.style.display = "block";
 
-        const response = await fetch(BASE_URL + "/api/validate_strategy", {
+        const response = await fetch(BASE_URL + "/api/custom_strategies", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: code })
+            body: JSON.stringify({ name: name, codeText: code })
         });
         const result = await response.json();
 
-        if (!result.valid) {
-            throw new Error(result.error || "Validation failed.");
+        if (!response.ok) {
+            throw new Error(result.error || "Failed to save strategy.");
         }
 
-        customStrategies[normalizedId] = {
+        const newId = result.strategy_id;
+        customStrategies[newId] = {
             name: name,
             type: "custom",
             description: "User defined strategy",
@@ -645,14 +646,28 @@ async function saveCustomStrategy() {
 }
 
 // Strategy Delete logic
-function deleteCustomStrategy(id) {
+async function deleteCustomStrategy(id) {
     if (customStrategies[id]) {
         if (confirm(`Are you sure you want to delete strategy "${customStrategies[id].name}"?`)) {
-            delete customStrategies[id];
-            saveCustomStrategiesToStorage();
-            updateStrategySelects();
-            renderActiveStrategies();
-            triggerAutoSave();
+            try {
+                const response = await fetch(BASE_URL + `/api/custom_strategies/${id}`, {
+                    method: "DELETE"
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || "Failed to delete strategy from server.");
+                }
+                
+                delete customStrategies[id];
+                saveCustomStrategiesToStorage();
+                updateStrategySelects();
+                renderActiveStrategies();
+                triggerAutoSave();
+                showToast("Strategy deleted successfully.", "success");
+            } catch (err) {
+                console.error("Error deleting strategy:", err);
+                showToast("Failed to delete strategy: " + err.message, "error");
+            }
         }
     }
 }
@@ -903,6 +918,9 @@ async function runTournament() {
     triggerAutoSave();
 }
 
+// ==================== PEOPLE MODE LOGIC ====================
+let peopleRoster = []; // Array of { id, name, strategyKey }
+
 // Initial setup
 const storedAutoSave = localStorage.getItem("trust_loop_auto_save");
 if (storedAutoSave !== null) {
@@ -914,11 +932,8 @@ if (storedAutoSave !== null) {
 loadCustomStrategies();
 updateStrategySelects();
 renderActiveStrategies();
-loadStateFromServer();
-
-// ==================== PEOPLE MODE LOGIC ====================
-
-let peopleRoster = []; // Array of { id, name, strategyKey }
+loadLocalStateFromStorage();
+loadCustomStrategiesFromServer();
 
 const RANDOM_NAMES = [
     "Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Hank",
@@ -933,7 +948,7 @@ function populatePeopleStrategyDropdown() {
     if (!select) return;
 
     const currentVal = select.value;
-    let html = '<option value="custom_script">✍️ Describe Their Strategy</option>';
+    let html = '<option value="custom_script">Describe Their Strategy</option>';
     html += '<option disabled>─── Or pick a preset ───</option>';
 
     for (const key in builtInStrategies) {
@@ -1073,9 +1088,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function getStrategyDisplayName(stratKey, person) {
     if (stratKey === 'custom_script') {
         if (person && person.rules) {
-            return '✍️ ' + describeRules(person.rules).split(' • ')[0];
+            return describeRules(person.rules).split(' • ')[0];
         }
-        return '✍️ Custom';
+        return 'Custom';
     }
     if (builtInStrategies[stratKey]) return builtInStrategies[stratKey].name;
     if (customStrategies[stratKey]) return customStrategies[stratKey].name;
@@ -1402,9 +1417,9 @@ async function runPeopleTournament() {
             const rank = index + 1;
             let rankClass = "rank-normal";
             let rankText = rank;
-            if (rank === 1) { rankClass = "rank-badge rank-1"; rankText = "🥇"; }
-            else if (rank === 2) { rankClass = "rank-badge rank-2"; rankText = "🥈"; }
-            else if (rank === 3) { rankClass = "rank-badge rank-3"; rankText = "🥉"; }
+            if (rank === 1) { rankClass = "rank-badge rank-1"; rankText = "1"; }
+            else if (rank === 2) { rankClass = "rank-badge rank-2"; rankText = "2"; }
+            else if (rank === 3) { rankClass = "rank-badge rank-3"; rankText = "3"; }
 
             const pIdx = peopleRoster.findIndex(p => p.id === item.id);
             const color = avatarColors[pIdx % avatarColors.length];
@@ -1462,13 +1477,13 @@ async function runPeopleTournament() {
         matrixTable.innerHTML = mHTML;
 
         statusDiv.className = "people-tournament-status done";
-        statusDiv.innerHTML = `✅ Tournament complete! ${ranking[0].name} wins with ${ranking[0].totalScore} points using ${ranking[0].strategyName}!`;
+        statusDiv.innerHTML = `Tournament complete! ${ranking[0].name} wins with ${ranking[0].totalScore} points using ${ranking[0].strategyName}!`;
 
         triggerAutoSave();
     } catch (err) {
         console.error("People tournament error:", err);
         statusDiv.className = "people-tournament-status error";
-        statusDiv.innerHTML = `❌ Tournament error: ${err.message}`;
+        statusDiv.innerHTML = `Tournament error: ${err.message}`;
     } finally {
         btn.disabled = peopleRoster.length < 2 ? true : false;
     }
@@ -1822,7 +1837,7 @@ function importStateFromFile(event) {
 function toggleAutoSave() {
     isAutoSaveEnabled = document.getElementById("auto-save-checkbox").checked;
     localStorage.setItem("trust_loop_auto_save", isAutoSaveEnabled ? "true" : "false");
-    showToast(isAutoSaveEnabled ? "Auto-Save to Server Enabled" : "Auto-Save to Server Disabled", "info");
+    showToast(isAutoSaveEnabled ? "Auto-save Enabled" : "Auto-save Disabled", "info");
     if (isAutoSaveEnabled) {
         triggerAutoSave();
     }
@@ -1834,15 +1849,152 @@ function triggerAutoSave() {
     const statusText = document.getElementById("sync-status-text");
 
     if (isAutoSaveEnabled) {
+        saveLocalStateToStorage();
         if (dot && statusText) {
-            dot.className = "status-dot orange";
-            statusText.innerText = "Saving...";
+            dot.className = "status-dot green";
+            statusText.innerText = "Saved locally";
         }
-        saveStateToServer(true);
     } else {
         if (dot && statusText) {
             dot.className = "status-dot orange";
             statusText.innerText = "Local changes";
         }
+    }
+}
+
+function saveLocalStateToStorage() {
+    const localState = {
+        settings: {
+            payoff_cc: parseInt(document.getElementById("param-cc").value) || 3,
+            payoff_dd: parseInt(document.getElementById("param-dd").value) || 1,
+            payoff_t: parseInt(document.getElementById("param-t").value) || 5,
+            payoff_s: parseInt(document.getElementById("param-s").value) || 0,
+            player1_strategy: document.getElementById("player1-strategy").value,
+            player2_strategy: document.getElementById("player2-strategy").value,
+            max_rounds: maxRounds,
+            tournament_rounds: parseInt(document.getElementById("tournament-rounds").value) || 10
+        },
+        game_history: {
+            player_score: playerScore,
+            ai_score: aiScore,
+            round: round,
+            player_history: playerHistory,
+            ai_history: aiHistory,
+            last_result_message: document.getElementById("result").innerText,
+            history_visible: document.getElementById("game-history-card")?.style.display !== "none",
+            history_html: document.querySelector("#history-table tbody")?.innerHTML || ""
+        },
+        people_roster: peopleRoster
+    };
+    localStorage.setItem("trust_loop_local_state", JSON.stringify(localState));
+}
+
+function loadLocalStateFromStorage() {
+    try {
+        const stored = localStorage.getItem("trust_loop_local_state");
+        if (stored) {
+            const state = JSON.parse(stored);
+            
+            // Apply settings
+            if (state.settings) {
+                const s = state.settings;
+                if (s.payoff_cc !== undefined) {
+                    document.getElementById("param-cc").value = s.payoff_cc;
+                    document.getElementById("banner-cc").value = s.payoff_cc;
+                }
+                if (s.payoff_dd !== undefined) {
+                    document.getElementById("param-dd").value = s.payoff_dd;
+                    document.getElementById("banner-dd").value = s.payoff_dd;
+                }
+                if (s.payoff_t !== undefined) {
+                    document.getElementById("param-t").value = s.payoff_t;
+                    document.getElementById("param-t-coop").value = s.payoff_t;
+                    document.getElementById("banner-t").value = s.payoff_t;
+                }
+                if (s.payoff_s !== undefined) {
+                    document.getElementById("param-s").value = s.payoff_s;
+                    document.getElementById("param-s-coop").value = s.payoff_s;
+                    document.getElementById("banner-s").value = s.payoff_s;
+                }
+                if (s.max_rounds !== undefined) maxRounds = s.max_rounds;
+                if (s.tournament_rounds !== undefined) {
+                    document.getElementById("tournament-rounds").value = s.tournament_rounds;
+                }
+                if (s.player1_strategy !== undefined) {
+                    document.getElementById("player1-strategy").value = s.player1_strategy;
+                }
+                if (s.player2_strategy !== undefined) {
+                    document.getElementById("player2-strategy").value = s.player2_strategy;
+                }
+                handleStrategyChange();
+            }
+            
+            // Apply game history
+            if (state.game_history) {
+                const gh = state.game_history;
+                playerScore = gh.player_score || 0;
+                aiScore = gh.ai_score || 0;
+                round = gh.round || 1;
+                playerHistory = gh.player_history || [];
+                aiHistory = gh.ai_history || [];
+                
+                document.getElementById("player-score").innerText = playerScore;
+                document.getElementById("ai-score").innerText = aiScore;
+                document.getElementById("round").innerText = round <= maxRounds ? round : maxRounds;
+                if (gh.last_result_message) {
+                    document.getElementById("result").innerText = gh.last_result_message;
+                }
+                
+                const historyCard = document.getElementById("game-history-card");
+                const historyTableBody = document.querySelector("#history-table tbody");
+                if (historyCard && historyTableBody) {
+                    if (gh.history_visible && gh.history_html) {
+                        historyCard.style.display = "block";
+                        historyTableBody.innerHTML = gh.history_html;
+                    } else {
+                        historyCard.style.display = "none";
+                    }
+                }
+            }
+            
+            // Apply roster
+            if (state.people_roster && Array.isArray(state.people_roster)) {
+                peopleRoster = state.people_roster;
+                renderPeopleRoster();
+                updatePeopleTournamentButton();
+            }
+        }
+    } catch (err) {
+        console.error("Error loading local state:", err);
+    }
+}
+
+async function loadCustomStrategiesFromServer() {
+    try {
+        const response = await fetch(BASE_URL + "/api/custom_strategies");
+        if (!response.ok) {
+            throw new Error("HTTP error " + response.status);
+        }
+        const customStrats = await response.json();
+        
+        // Apply custom strategies to memory
+        customStrategies = {};
+        for (const key in customStrats) {
+            const item = customStrats[key];
+            customStrategies[key] = {
+                name: item.name,
+                type: "custom",
+                description: item.description || "User defined strategy",
+                codeText: item.codeText
+            };
+        }
+        saveCustomStrategiesToStorage();
+        updateStrategySelects();
+        renderActiveStrategies();
+        
+        // Update dropdowns if we are in People Mode
+        populatePeopleStrategyDropdown();
+    } catch (err) {
+        console.error("Error loading custom strategies from server:", err);
     }
 }
