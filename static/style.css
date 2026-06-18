@@ -1740,4 +1740,27 @@ tbody tr:hover {
     background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Strategy Selection & Inactive States in Strategy Arena */
+.strategy-select-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.strategy-select-checkbox:hover {
+    transform: scale(1.15);
+}
+
+.strategy-item {
+    transition: opacity 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.strategy-item.inactive {
+    opacity: 0.5;
+    border-color: #1f2937;
+    background: rgba(17, 24, 39, 0.3);
 }

@@ -61,6 +61,36 @@ const builtInStrategies = {
 };
 
 let customStrategies = {};
+let selectedTournamentStrategies = {};
+
+function isStrategySelected(key) {
+    if (selectedTournamentStrategies[key] !== undefined) {
+        return selectedTournamentStrategies[key];
+    }
+    const strat = builtInStrategies[key] || customStrategies[key];
+    if (strat) {
+        return strat.type === "custom";
+    }
+    return false;
+}
+
+function toggleStrategySelection(key, isChecked) {
+    selectedTournamentStrategies[key] = isChecked;
+    
+    // Visually toggle inactive class to avoid full re-render flickering
+    const checkboxes = document.querySelectorAll(`input[type="checkbox"]`);
+    for (const cb of checkboxes) {
+        if (cb.getAttribute('onchange') && cb.getAttribute('onchange').includes(`toggleStrategySelection('${key}'`)) {
+            const item = cb.closest('.strategy-item');
+            if (item) {
+                item.classList.toggle('inactive', !isChecked);
+            }
+            break;
+        }
+    }
+    
+    triggerAutoSave();
+}
 
 const templates = {
     titfortwotats: {
@@ -720,12 +750,17 @@ function renderActiveStrategies() {
 
     for (const key in builtInStrategies) {
         const strat = builtInStrategies[key];
+        const isChecked = isStrategySelected(key);
+        const isInactive = !isChecked;
         html += `
-            <div class="strategy-item">
-                <div class="strategy-info-box">
-                    <span class="strategy-item-name">${strat.name}</span>
-                    <span class="strategy-item-badge built-in">Built-in</span>
-                    <span class="strategy-item-desc">${strat.description}</span>
+            <div class="strategy-item ${isInactive ? 'inactive' : ''}">
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <input type="checkbox" class="strategy-select-checkbox" onchange="toggleStrategySelection('${key}', this.checked)" ${isChecked ? 'checked' : ''}>
+                    <div class="strategy-info-box">
+                        <span class="strategy-item-name">${strat.name}</span>
+                        <span class="strategy-item-badge built-in">Built-in</span>
+                        <span class="strategy-item-desc">${strat.description}</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -733,12 +768,17 @@ function renderActiveStrategies() {
 
     for (const key in customStrategies) {
         const strat = customStrategies[key];
+        const isChecked = isStrategySelected(key);
+        const isInactive = !isChecked;
         html += `
-            <div class="strategy-item">
-                <div class="strategy-info-box">
-                    <span class="strategy-item-name">${strat.name}</span>
-                    <span class="strategy-item-badge custom">Custom</span>
-                    <span class="strategy-item-desc">User-defined logic</span>
+            <div class="strategy-item ${isInactive ? 'inactive' : ''}">
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <input type="checkbox" class="strategy-select-checkbox" onchange="toggleStrategySelection('${key}', this.checked)" ${isChecked ? 'checked' : ''}>
+                    <div class="strategy-info-box">
+                        <span class="strategy-item-name">${strat.name}</span>
+                        <span class="strategy-item-badge custom">Custom</span>
+                        <span class="strategy-item-desc">User-defined logic</span>
+                    </div>
                 </div>
                 <button class="delete-strategy-btn" onclick="deleteCustomStrategy('${key}')">Delete</button>
             </div>
@@ -760,10 +800,19 @@ async function runTournament() {
 
     const allStrategies = [];
     for (const key in builtInStrategies) {
-        allStrategies.push({ key: key, ...builtInStrategies[key] });
+        if (isStrategySelected(key)) {
+            allStrategies.push({ key: key, ...builtInStrategies[key] });
+        }
     }
     for (const key in customStrategies) {
-        allStrategies.push({ key: key, ...customStrategies[key] });
+        if (isStrategySelected(key)) {
+            allStrategies.push({ key: key, ...customStrategies[key] });
+        }
+    }
+
+    if (allStrategies.length < 2) {
+        showToast("Please select at least 2 strategies to run the tournament.", "error");
+        return;
     }
 
     const totalScores = {};
@@ -777,7 +826,8 @@ async function runTournament() {
     });
 
     // Show a loading indicator for custom strategies
-    const hasCustom = Object.keys(customStrategies).length > 0;
+    const runningCustom = allStrategies.filter(s => s.type === "custom");
+    const hasCustom = runningCustom.length > 0;
     if (hasCustom) {
         showToast("Running tournament (Python strategies may take a moment)...", "info");
     }
@@ -1547,7 +1597,8 @@ function collectStateJSON() {
             player1_strategy: player1_strategy,
             player2_strategy: player2_strategy,
             max_rounds: maxRounds,
-            tournament_rounds: tournament_rounds
+            tournament_rounds: tournament_rounds,
+            selected_tournament_strategies: selectedTournamentStrategies
         },
         custom_strategies: custStrats,
         game_history: {
@@ -1607,6 +1658,10 @@ function applyStateJSON(state) {
             if (settings.tournament_rounds !== undefined) {
                 document.getElementById("tournament-rounds").value = settings.tournament_rounds;
             }
+            if (settings.selected_tournament_strategies !== undefined) {
+                selectedTournamentStrategies = settings.selected_tournament_strategies;
+            }
+            renderActiveStrategies();
         }
 
         // 2. Load Custom Strategies (Python code — no client-side Function needed)
@@ -1872,7 +1927,8 @@ function saveLocalStateToStorage() {
             player1_strategy: document.getElementById("player1-strategy").value,
             player2_strategy: document.getElementById("player2-strategy").value,
             max_rounds: maxRounds,
-            tournament_rounds: parseInt(document.getElementById("tournament-rounds").value) || 10
+            tournament_rounds: parseInt(document.getElementById("tournament-rounds").value) || 10,
+            selected_tournament_strategies: selectedTournamentStrategies
         },
         game_history: {
             player_score: playerScore,
@@ -1926,7 +1982,11 @@ function loadLocalStateFromStorage() {
                 if (s.player2_strategy !== undefined) {
                     document.getElementById("player2-strategy").value = s.player2_strategy;
                 }
+                if (s.selected_tournament_strategies !== undefined) {
+                    selectedTournamentStrategies = s.selected_tournament_strategies;
+                }
                 handleStrategyChange();
+                renderActiveStrategies();
             }
             
             // Apply game history
