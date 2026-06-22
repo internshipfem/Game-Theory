@@ -66,6 +66,20 @@
                     <div class="rule-badge cooperate">Both Cooperate: +<input type="number" id="banner-cc" class="banner-num-input" value="3"> pts</div>
                     <div class="rule-badge betray">Both Betray: +<input type="number" id="banner-dd" class="banner-num-input" value="1"> pt</div>
                     <div class="rule-badge asymmetric">Betray vs Cooperate: +<input type="number" id="banner-t" class="banner-num-input" value="5"> pts / +<input type="number" id="banner-s" class="banner-num-input" value="0"> pts</div>
+                    <div class="rule-badge noise">
+                        <div class="noise-control" style="border: none; padding: 0; background: transparent; width: 100%;">
+                            <span class="noise-control-label">
+                                <span class="noise-icon">🫨</span> Noise:
+                                <span class="noise-info-icon">?
+                                    <span class="noise-tooltip">Trembling Hand — each move has this % chance of being randomly flipped. Simulates real-world mistakes and uncertainty.</span>
+                                </span>
+                            </span>
+                            <div class="noise-slider-wrapper">
+                                <input type="range" id="game-noise-slider" class="noise-slider" min="0" max="100" value="0" oninput="syncNoiseSliders(this.value)">
+                                <span id="game-noise-value" class="noise-value-display noise-off">0%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -281,6 +295,16 @@ return 'cooperate'"></textarea>
                             </div>
                             <button class="play-btn start-btn" onclick="runTournament()">Run Tournament</button>
                         </div>
+                        <div class="tournament-noise-control">
+                            <span class="noise-control-label">
+                                <span class="noise-icon">🫨</span> Noise:
+                                <span class="noise-info-icon">?
+                                    <span class="noise-tooltip">Trembling Hand — each move has this % chance of being randomly flipped during the tournament.</span>
+                                </span>
+                            </span>
+                            <input type="range" id="arena-noise-slider" class="noise-slider" min="0" max="100" value="0" oninput="syncNoiseSliders(this.value)">
+                            <span id="arena-noise-value" class="noise-value-display noise-off">0%</span>
+                        </div>
                     </div>
 
                     <div class="arena-card" id="leaderboard-card" style="display: none;">
@@ -438,6 +462,16 @@ return 'cooperate'"></textarea>
                                 <input type="number" id="people-tournament-rounds" class="banner-num-input" value="10" min="1" max="500">
                             </div>
                             <button id="btn-run-people-tournament" class="play-btn start-btn people-run-btn" onclick="runPeopleTournament()" disabled>Run Tournament</button>
+                        </div>
+                        <div class="tournament-noise-control">
+                            <span class="noise-control-label">
+                                <span class="noise-icon">🫨</span> Noise:
+                                <span class="noise-info-icon">?
+                                    <span class="noise-tooltip">Trembling Hand — each move has this % chance of being randomly flipped during the tournament.</span>
+                                </span>
+                            </span>
+                            <input type="range" id="people-noise-slider" class="noise-slider" min="0" max="100" value="0" oninput="syncNoiseSliders(this.value)">
+                            <span id="people-noise-value" class="noise-value-display noise-off">0%</span>
                         </div>
                         <div id="people-tournament-status" class="people-tournament-status" style="display: none;"></div>
                     </div>

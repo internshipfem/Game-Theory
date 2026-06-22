@@ -13,6 +13,7 @@ let playerHistory = [];
 let aiHistory = [];
 let player1ManualChoice = "cooperate";
 let player2ManualChoice = "cooperate";
+let noiseLevel = 0; // Trembling Hand noise percentage (0-100)
 
 // Strategy Definition System
 const builtInStrategies = {
@@ -129,6 +130,55 @@ betrays = opponent_history.count("betray")
 return "betray" if betrays > len(opponent_history) / 2 else "cooperate"`
     }
 };
+
+// ==================== NOISE / TREMBLING HAND ====================
+
+/**
+ * Apply noise (trembling hand) to a move.
+ * With probability noisePercent/100, the move is flipped.
+ * @param {string} move - "cooperate" or "betray"
+ * @param {number} noisePercent - 0 to 100
+ * @returns {{ move: string, trembled: boolean }}
+ */
+function applyNoise(move, noisePercent) {
+    if (noisePercent <= 0) return { move: move, trembled: false };
+    if (Math.random() * 100 < noisePercent) {
+        const flipped = (move === "cooperate") ? "betray" : "cooperate";
+        return { move: flipped, trembled: true };
+    }
+    return { move: move, trembled: false };
+}
+
+/**
+ * Sync all noise sliders across Game, Arena, and People screens.
+ * Also updates the noise percentage display with color-coded feedback.
+ */
+function syncNoiseSliders(value) {
+    noiseLevel = parseInt(value) || 0;
+
+    const sliderIds = ['game-noise-slider', 'arena-noise-slider', 'people-noise-slider'];
+    const valueIds = ['game-noise-value', 'arena-noise-value', 'people-noise-value'];
+
+    sliderIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && parseInt(el.value) !== noiseLevel) el.value = noiseLevel;
+    });
+
+    // Determine color class based on noise level
+    let colorClass = 'noise-off';
+    if (noiseLevel > 0 && noiseLevel <= 30) colorClass = 'noise-low';
+    else if (noiseLevel > 30) colorClass = 'noise-high';
+
+    valueIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = noiseLevel + '%';
+            el.className = 'noise-value-display ' + colorClass;
+        }
+    });
+
+    triggerAutoSave();
+}
 
 // Helper: execute a Python strategy via the server
 async function executePythonStrategy(code, myHistory, opponentHistory) {
@@ -250,21 +300,29 @@ async function playRound() {
     const p1Strat = document.getElementById("player1-strategy").value;
     const p2Strat = document.getElementById("player2-strategy").value;
 
-    // Determine Player 1 move
-    let playerMove;
+    // Determine Player 1 intended move
+    let playerIntended;
     if (p1Strat === "manual") {
-        playerMove = player1ManualChoice;
+        playerIntended = player1ManualChoice;
     } else {
-        playerMove = await getMoveForStrategy(p1Strat, playerHistory, aiHistory, true);
+        playerIntended = await getMoveForStrategy(p1Strat, playerHistory, aiHistory, true);
     }
 
-    // Determine Player 2 move
-    let aiMove;
+    // Determine Player 2 intended move
+    let aiIntended;
     if (p2Strat === "manual") {
-        aiMove = player2ManualChoice;
+        aiIntended = player2ManualChoice;
     } else {
-        aiMove = await getMoveForStrategy(p2Strat, aiHistory, playerHistory, false);
+        aiIntended = await getMoveForStrategy(p2Strat, aiHistory, playerHistory, false);
     }
+
+    // Apply noise / trembling hand
+    const p1Noise = applyNoise(playerIntended, noiseLevel);
+    const p2Noise = applyNoise(aiIntended, noiseLevel);
+    const playerMove = p1Noise.move;
+    const aiMove = p2Noise.move;
+    const p1Trembled = p1Noise.trembled;
+    const p2Trembled = p2Noise.trembled;
 
     const payoff_cc = parseInt(document.getElementById("param-cc").value) || 3;
     const payoff_dd = parseInt(document.getElementById("param-dd").value) || 1;
@@ -300,10 +358,18 @@ async function playRound() {
         const p1Name = p1Strat === "manual" ? "Player 1 (You)" : `Player 1 (${p1Strat})`;
         const p2Name = p2Strat === "manual" ? "Player 2" : `Player 2 (${p2Strat})`;
 
-        document.getElementById("result").innerText =
-            `${p1Name} chose ${playerMove}.\n${p2Name} chose ${aiMove}.\n\nGame Master: ${data.message}`;
+        // Build result text with trembling hand info
+        let resultText = `${p1Name} chose ${playerMove}.`;
+        if (p1Trembled) resultText += ` ⚡ (intended ${playerIntended}, hand trembled!)`;
+        resultText += `\n${p2Name} chose ${aiMove}.`;
+        if (p2Trembled) resultText += ` ⚡ (intended ${aiIntended}, hand trembled!)`;
+        resultText += `\n\nGame Master: ${data.message}`;
+        if (noiseLevel > 0) {
+            resultText += `\n🫨 Noise level: ${noiseLevel}%`;
+        }
+        document.getElementById("result").innerText = resultText;
 
-        // Append to Match History
+        // Append to Match History with trembled indicators
         const historyCard = document.getElementById("game-history-card");
         const historyTableBody = document.querySelector("#history-table tbody");
         if (historyCard && historyTableBody) {
@@ -313,11 +379,20 @@ async function playRound() {
             const p2MoveText = aiMove === "cooperate" ? "Cooperate" : "Betray";
             const p1Class = playerMove === "cooperate" ? "cooperate" : "betray";
             const p2Class = aiMove === "cooperate" ? "cooperate" : "betray";
+
+            const p1TrembledBadge = p1Trembled 
+                ? `<span class="trembled-badge"><span class="trembled-icon">⚡</span>Trembled</span>` 
+                : '';
+            const p2TrembledBadge = p2Trembled 
+                ? `<span class="trembled-badge"><span class="trembled-icon">⚡</span>Trembled</span>` 
+                : '';
+            const rowTrembledClass = (p1Trembled || p2Trembled) ? ' class="trembled-row"' : '';
+
             const rowHTML = `
-                <tr>
+                <tr${rowTrembledClass}>
                     <td><strong>#${currentRound}</strong></td>
-                    <td><span class="move-badge ${p1Class}">${p1MoveText}</span></td>
-                    <td><span class="move-badge ${p2Class}">${p2MoveText}</span></td>
+                    <td><span class="move-badge ${p1Class}">${p1MoveText}</span>${p1TrembledBadge}</td>
+                    <td><span class="move-badge ${p2Class}">${p2MoveText}</span>${p2TrembledBadge}</td>
                     <td><span class="payoff-badge">+${data.player_change} / +${data.opponent_change}</span></td>
                 </tr>
             `;
@@ -860,6 +935,10 @@ async function runTournament() {
 
                 if (move1 !== "cooperate" && move1 !== "betray") move1 = "cooperate";
                 if (move2 !== "cooperate" && move2 !== "betray") move2 = "cooperate";
+
+                // Apply noise / trembling hand to tournament moves
+                move1 = applyNoise(move1, noiseLevel).move;
+                move2 = applyNoise(move2, noiseLevel).move;
 
                 s1History.push(move1);
                 s2History.push(move2);
@@ -1415,6 +1494,10 @@ async function runPeopleTournament() {
                     if (move1 !== "cooperate" && move1 !== "betray") move1 = "cooperate";
                     if (move2 !== "cooperate" && move2 !== "betray") move2 = "cooperate";
 
+                    // Apply noise / trembling hand to people tournament moves
+                    move1 = applyNoise(move1, noiseLevel).move;
+                    move2 = applyNoise(move2, noiseLevel).move;
+
                     p1History.push(move1);
                     p2History.push(move2);
 
@@ -1598,7 +1681,8 @@ function collectStateJSON() {
             player2_strategy: player2_strategy,
             max_rounds: maxRounds,
             tournament_rounds: tournament_rounds,
-            selected_tournament_strategies: selectedTournamentStrategies
+            selected_tournament_strategies: selectedTournamentStrategies,
+            noise_level: noiseLevel
         },
         custom_strategies: custStrats,
         game_history: {
@@ -1660,6 +1744,9 @@ function applyStateJSON(state) {
             }
             if (settings.selected_tournament_strategies !== undefined) {
                 selectedTournamentStrategies = settings.selected_tournament_strategies;
+            }
+            if (settings.noise_level !== undefined) {
+                syncNoiseSliders(settings.noise_level);
             }
             renderActiveStrategies();
         }
@@ -1928,7 +2015,8 @@ function saveLocalStateToStorage() {
             player2_strategy: document.getElementById("player2-strategy").value,
             max_rounds: maxRounds,
             tournament_rounds: parseInt(document.getElementById("tournament-rounds").value) || 10,
-            selected_tournament_strategies: selectedTournamentStrategies
+            selected_tournament_strategies: selectedTournamentStrategies,
+            noise_level: noiseLevel
         },
         game_history: {
             player_score: playerScore,
@@ -1984,6 +2072,9 @@ function loadLocalStateFromStorage() {
                 }
                 if (s.selected_tournament_strategies !== undefined) {
                     selectedTournamentStrategies = s.selected_tournament_strategies;
+                }
+                if (s.noise_level !== undefined) {
+                    syncNoiseSliders(s.noise_level);
                 }
                 handleStrategyChange();
                 renderActiveStrategies();
