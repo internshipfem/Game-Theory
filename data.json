@@ -9,11 +9,18 @@
     "max_rounds": 10,
     "tournament_rounds": 10,
     "selected_tournament_strategies": {
-      "snake": false,
-      "titfortat": true
-    }
+      "snake": true,
+      "titfortat": true,
+      "angel": true
+    },
+    "noise_level": 50
   },
   "custom_strategies": {
+    "abhrajeet": {
+      "name": "Abhrajeet",
+      "codeText": "def strategy(my_history, opponent_history):\n    if len(my_history) == 0:\n        return \"cooperate\"\n\n    if opponent_history[-1] == \"betray\":\n        if len(opponent_history) > 1 and opponent_history[-2] == \"betray\":\n            return \"betray\"\n        return \"cooperate\"\n\n    return \"cooperate\"",
+      "description": "User defined strategy"
+    },
     "strategy": {
       "name": "Strategy",
       "codeText": "def strategy(my_history, opponent_history):\n    round_no = len(my_history)\n\n    # Round 1: start friendly\n    if round_no == 0:\n        return \"cooperate\"\n\n    # Count opponent behavior\n    opp_betrays = opponent_history.count(\"betray\")\n    opp_coops = opponent_history.count(\"cooperate\")\n\n    # If opponent always cooperates so far, cooperate\n    # This avoids triggering Grudger\n    if opp_betrays == 0:\n        return \"cooperate\"\n\n    # If opponent is mostly betraying, punish\n    betray_rate = opp_betrays / len(opponent_history)\n\n    if betray_rate >= 0.6:\n        return \"betray\"\n\n    # If opponent betrayed last round, punish once\n    if opponent_history[-1] == \"betray\":\n        return \"betray\"\n\n    # If opponent has cooperated recently, forgive\n    if len(opponent_history) >= 2:\n        if opponent_history[-1] == \"cooperate\" and opponent_history[-2] == \"cooperate\":\n            return \"cooperate\"\n\n    # Default: cooperate\n    return \"cooperate\"",
@@ -22,11 +29,6 @@
     "strategy2": {
       "name": "Strategy2",
       "codeText": "def strategy(my_history, opponent_history):\n    round_no = len(my_history)\n\n    if round_no == 0:\n        return \"cooperate\"\n\n    opp_betrays = opponent_history.count(\"betray\")\n    opp_coops = opponent_history.count(\"cooperate\")\n\n    # First 3 rounds: build trust\n    if round_no < 3:\n        return \"cooperate\"\n\n    # If opponent never betrayed in first 5 rounds, exploit sometimes\n    if round_no >= 5 and opp_betrays == 0:\n        if round_no % 3 == 0:\n            return \"betray\"\n        return \"cooperate\"\n\n    # If opponent betrayed last round, punish\n    if opponent_history[-1] == \"betray\":\n        return \"betray\"\n\n    # If opponent betrays too much, always betray\n    betray_rate = opp_betrays / len(opponent_history)\n    if betray_rate > 0.45:\n        return \"betray\"\n\n    # Otherwise cooperate\n    return \"cooperate\"",
-      "description": "User defined strategy"
-    },
-    "abhrajeet": {
-      "name": "Abhrajeet",
-      "codeText": "def strategy(my_history, opponent_history):\n    if len(my_history) == 0:\n        return \"cooperate\"\n\n    if opponent_history[-1] == \"betray\":\n        if len(opponent_history) > 1 and opponent_history[-2] == \"betray\":\n            return \"betray\"\n        return \"cooperate\"\n\n    return \"cooperate\"",
       "description": "User defined strategy"
     }
   },
@@ -38,7 +40,7 @@
     "ai_history": [],
     "last_result_message": "Make your first move.",
     "history_visible": false,
-    "history_html": "\n                            <!-- Populated via JS -->\n                        "
+    "history_html": ""
   },
   "tournament_history": {
     "leaderboard_visible": true,
